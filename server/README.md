@@ -7,7 +7,7 @@
 - 提供消息接口供 Android 客户端拉取
 - 支持多信息源配置
 - 支持增量同步（通过 `since` 参数）
-- 支持多种认证方式
+- 支持消息 URL 字段（可选）
 
 ## 安装
 
@@ -46,10 +46,25 @@ GET /api/messages
     "preview": "新版本 v2.0 已发布...",
     "content": "## 更新内容\n\n- 性能提升 30%",
     "timestamp": 1713432000000,
-    "source": "系统通知"
+    "source": "系统通知",
+    "url": "https://example.com/notice/001"
   }
 ]
 ```
+
+### 添加消息（用于测试）
+
+```
+POST /api/messages
+```
+
+**请求参数：**
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| title | string | 是 | 消息标题 |
+| preview | string | 是 | 预览文本 |
+| content | string | 是 | 完整内容（支持 Markdown） |
+| url | string | 否 | 原文链接 |
 
 ### 健康检查
 
@@ -73,7 +88,8 @@ GET /health
   "preview": "string",
   "content": "string",
   "timestamp": "number (Unix timestamp in milliseconds)",
-  "source": "string"
+  "source": "string",
+  "url": "string (optional)"
 }
 ```
 
@@ -86,3 +102,4 @@ GET /health
 | content | string | 是 | 完整内容（支持 Markdown） |
 | timestamp | number | 是 | Unix 时间戳（毫秒） |
 | source | string | 是 | 消息来源名称 |
+| url | string | 否 | 原文链接，点击可跳转 |
