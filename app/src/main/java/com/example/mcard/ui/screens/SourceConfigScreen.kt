@@ -78,6 +78,7 @@ fun SourceConfigScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
     var editingSourceId by remember { mutableStateOf<String?>(null) }
+    var syncTimeVersion by remember { mutableStateOf(0L) }
 
     // Load sources from local storage
     sources = sourcesPrefs.getSources()
@@ -112,10 +113,12 @@ fun SourceConfigScreen(
                 onDismiss = { editingSourceId = null },
                 onSave = { newTimestamp ->
                     syncPreferences.setLastSyncTimestamp(source.id, newTimestamp)
+                    syncTimeVersion = System.currentTimeMillis()
                     editingSourceId = null
                 },
                 onReset = {
                     syncPreferences.clearSourceTimestamp(source.id)
+                    syncTimeVersion = System.currentTimeMillis()
                     editingSourceId = null
                 }
             )
@@ -215,7 +218,7 @@ fun SourceConfigScreen(
                 ) {
                     items(
                         items = sources,
-                        key = { it.id }
+                        key = { "${it.id}_$syncTimeVersion" }
                     ) { source ->
                         SourceCard(
                             source = source,
