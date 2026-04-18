@@ -320,6 +320,21 @@ private fun SourceCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                Surface(
+                    modifier = Modifier
+                        .clip(RectCornerShape)
+                        .clickable { onDelete },
+                    color = if (source.isEnabled) LightGray else MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, LightGray)
+                ) {
+                    Text(
+                        text = "删除",
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                        color = if (source.isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Switch(
                     checked = source.isEnabled,
                     onCheckedChange = onToggleEnabled,
@@ -328,14 +343,6 @@ private fun SourceCard(
                         checkedTrackColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "删除",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
 
             // URL
