@@ -38,12 +38,17 @@ import java.util.Locale
 fun MessageDetailPager(
     messages: List<Message>,
     initialIndex: Int,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onPageChanged: (Int) -> Unit = {}
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialIndex,
         pageCount = { messages.size }
     )
+
+    androidx.compose.runtime.LaunchedEffect(pagerState.currentPage) {
+        onPageChanged(pagerState.currentPage)
+    }
 
     Dialog(
         onDismissRequest = onDismiss,

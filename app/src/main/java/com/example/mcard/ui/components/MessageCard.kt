@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ import java.util.Locale
 fun MessageCard(
     message: Message,
     onCardClick: () -> Unit,
+    isRead: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -47,6 +49,7 @@ fun MessageCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (isRead) 0.5f else 1f)
             .clip(RectCornerShape)
             .clickable(
                 interactionSource = interactionSource,

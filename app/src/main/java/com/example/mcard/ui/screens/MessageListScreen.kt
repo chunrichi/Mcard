@@ -57,12 +57,15 @@ fun MessageListScreen(
     var isLoading by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var readMessageKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     val apiService = remember { ApiService() }
     val scope = rememberCoroutineScope()
 
     // Load messages on first composition - load from local first, then fetch from network
     LaunchedEffect(Unit) {
+        readMessageKeys = messagesPreferences?.getReadMessageIds() ?: emptySet()
+
         isLoading = true
         errorMessage = null
 
@@ -116,7 +119,14 @@ fun MessageListScreen(
         MessageDetailPager(
             messages = messages,
             initialIndex = selectedMessageIndex!!,
-            onDismiss = { selectedMessageIndex = null }
+            onDismiss = { selectedMessageIndex = null },
+            onPageChanged = { index ->
+                val messageKey = "${messages[index].source}_${messages[index].id}"
+                if (!readMessageKeys.contains(messageKey)) {
+                    messagesPreferences?.markAsRead(messageKey)
+                    readMessageKeys = readMessageKeys + messageKey
+                }
+            }
         )
     }
 
@@ -259,9 +269,15 @@ fun MessageListScreen(
                         items = messages,
                         key = { _, message -> "${message.source}_${message.id}" }
                     ) { index, message ->
+                        val messageKey = "${message.source}_${message.id}"
                         MessageCard(
                             message = message,
-                            onCardClick = { selectedMessageIndex = index }
+                            isRead = readMessageKeys.contains(messageKey),
+                            onCardClick = {
+                                messagesPreferences?.markAsRead(messageKey)
+                                readMessageKeys = readMessageKeys + messageKey
+                                selectedMessageIndex = index
+                            }
                         )
                     }
                 }

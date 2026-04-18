@@ -37,6 +37,20 @@ class MessagesPreferences(context: Context) {
         prefs.edit().remove(KEY_MESSAGES).apply()
     }
 
+    fun markAsRead(sourceId: String) {
+        val readSet = getReadMessageIds().toMutableSet()
+        readSet.add(sourceId)
+        prefs.edit().putStringSet(KEY_READ_MESSAGES, readSet).apply()
+    }
+
+    fun isMessageRead(sourceId: String): Boolean {
+        return getReadMessageIds().contains(sourceId)
+    }
+
+    fun getReadMessageIds(): Set<String> {
+        return prefs.getStringSet(KEY_READ_MESSAGES, emptySet()) ?: emptySet()
+    }
+
     private fun parseMessages(jsonArray: JSONArray): List<Message> {
         val messages = mutableListOf<Message>()
         for (i in 0 until jsonArray.length()) {
@@ -58,5 +72,6 @@ class MessagesPreferences(context: Context) {
     companion object {
         private const val PREFS_NAME = "mcard_messages"
         private const val KEY_MESSAGES = "messages"
+        private const val KEY_READ_MESSAGES = "read_messages"
     }
 }
