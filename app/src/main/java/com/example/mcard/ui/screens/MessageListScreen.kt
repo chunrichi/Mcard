@@ -105,8 +105,8 @@ fun MessageListScreen(
                     .sortedByDescending { it.timestamp }
                 messagesPreferences?.saveMessages(messages)
                 syncPreferences?.lastMessageCount = messages.size
-            } else if (localMessages.isEmpty()) {
-                errorMessage = "拉取失败"
+            } else if (messages.isEmpty()) {
+                errorMessage = if (localMessages.isEmpty()) "拉取失败" else "已是最新数据"
             }
         }
         isLoading = false
@@ -175,9 +175,13 @@ fun MessageListScreen(
                                                     android.util.Log.e("MessageList", "Fetch failed: ${e.message}", e)
                                                 }
                                             }
-                                            messages = allMessages.distinctBy { "${it.source}_${it.id}" }
-                                                .sortedByDescending { it.timestamp }
-                                            syncPreferences?.lastMessageCount = messages.size
+                                            if (allMessages.isNotEmpty()) {
+                                                messages = allMessages.distinctBy { "${it.source}_${it.id}" }
+                                                    .sortedByDescending { it.timestamp }
+                                                syncPreferences?.lastMessageCount = messages.size
+                                            } else if (messages.isEmpty()) {
+                                                errorMessage = "拉取失败"
+                                            }
                                         }
                                         isRefreshing = false
                                     }
