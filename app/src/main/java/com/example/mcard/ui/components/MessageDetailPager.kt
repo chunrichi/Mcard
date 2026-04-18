@@ -10,16 +10,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -39,14 +44,16 @@ fun MessageDetailPager(
     messages: List<Message>,
     initialIndex: Int,
     onDismiss: () -> Unit,
-    onPageChanged: (Int) -> Unit = {}
+    onPageChanged: (Int) -> Unit = {},
+    onToggleFavorite: (String) -> Unit = {},
+    favoriteMessageKeys: Set<String> = emptySet()
 ) {
     val pagerState = rememberPagerState(
         initialPage = initialIndex,
         pageCount = { messages.size }
     )
 
-    androidx.compose.runtime.LaunchedEffect(pagerState.currentPage) {
+    LaunchedEffect(pagerState.currentPage) {
         onPageChanged(pagerState.currentPage)
     }
 
@@ -68,11 +75,16 @@ fun MessageDetailPager(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val message = messages[page]
+                val messageKey = "${message.source}_${message.id}"
+                val isFavorite = favoriteMessageKeys.contains(messageKey)
+
                 MessageDetailContent(
                     message = message,
                     currentIndex = page,
                     totalCount = messages.size,
-                    onClose = onDismiss
+                    isFavorite = isFavorite,
+                    onClose = onDismiss,
+                    onToggleFavorite = { onToggleFavorite(messageKey) }
                 )
             }
         }
@@ -84,7 +96,9 @@ private fun MessageDetailContent(
     message: Message,
     currentIndex: Int,
     totalCount: Int,
-    onClose: () -> Unit
+    isFavorite: Boolean,
+    onClose: () -> Unit,
+    onToggleFavorite: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -116,7 +130,7 @@ private fun MessageDetailContent(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Metadata row
         Row(
@@ -139,6 +153,15 @@ private fun MessageDetailContent(
                 text = "${currentIndex + 1}/$totalCount",
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { onToggleFavorite() },
+                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
         }
 

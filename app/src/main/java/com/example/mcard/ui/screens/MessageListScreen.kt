@@ -65,6 +65,7 @@ fun MessageListScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var readMessageKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var favoriteMessageKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
     var hideReadMessages by remember { mutableStateOf(false) }
 
     val apiService = remember { ApiService() }
@@ -73,6 +74,7 @@ fun MessageListScreen(
     // Load messages on first composition - load from local first, then fetch from network
     LaunchedEffect(Unit) {
         readMessageKeys = messagesPreferences?.getReadMessageIds() ?: emptySet()
+        favoriteMessageKeys = messagesPreferences?.getFavoriteMessageIds() ?: emptySet()
 
         isLoading = true
         errorMessage = null
@@ -134,7 +136,16 @@ fun MessageListScreen(
                     messagesPreferences?.markAsRead(messageKey)
                     readMessageKeys = readMessageKeys + messageKey
                 }
-            }
+            },
+            onToggleFavorite = { messageKey ->
+                messagesPreferences?.toggleFavorite(messageKey)
+                favoriteMessageKeys = if (favoriteMessageKeys.contains(messageKey)) {
+                    favoriteMessageKeys - messageKey
+                } else {
+                    favoriteMessageKeys + messageKey
+                }
+            },
+            favoriteMessageKeys = favoriteMessageKeys
         )
     }
 
@@ -330,6 +341,7 @@ fun MessageListScreen(
                                 MessageCard(
                                     message = message,
                                     isRead = readMessageKeys.contains(messageKey),
+                                    isFavorite = favoriteMessageKeys.contains(messageKey),
                                     onCardClick = {
                                         messagesPreferences?.markAsRead(messageKey)
                                         readMessageKeys = readMessageKeys + messageKey

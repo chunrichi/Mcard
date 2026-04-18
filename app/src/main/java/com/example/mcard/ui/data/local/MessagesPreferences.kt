@@ -37,6 +37,24 @@ class MessagesPreferences(context: Context) {
         prefs.edit().remove(KEY_MESSAGES).apply()
     }
 
+    fun toggleFavorite(messageKey: String) {
+        val favoriteSet = getFavoriteMessageIds().toMutableSet()
+        if (favoriteSet.contains(messageKey)) {
+            favoriteSet.remove(messageKey)
+        } else {
+            favoriteSet.add(messageKey)
+        }
+        prefs.edit().putStringSet(KEY_FAVORITES, favoriteSet).apply()
+    }
+
+    fun isMessageFavorited(messageKey: String): Boolean {
+        return getFavoriteMessageIds().contains(messageKey)
+    }
+
+    fun getFavoriteMessageIds(): Set<String> {
+        return prefs.getStringSet(KEY_FAVORITES, emptySet()) ?: emptySet()
+    }
+
     fun deleteMessage(messageKey: String) {
         val currentMessages = getMessages().toMutableList()
         val updatedMessages = currentMessages.filter { "${it.source}_${it.id}" != messageKey }
@@ -79,5 +97,6 @@ class MessagesPreferences(context: Context) {
         private const val PREFS_NAME = "mcard_messages"
         private const val KEY_MESSAGES = "messages"
         private const val KEY_READ_MESSAGES = "read_messages"
+        private const val KEY_FAVORITES = "favorites"
     }
 }

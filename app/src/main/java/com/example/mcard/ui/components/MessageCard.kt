@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,6 +45,7 @@ fun MessageCard(
     message: Message,
     onCardClick: () -> Unit,
     isRead: Boolean = false,
+    isFavorite: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -65,11 +70,20 @@ fun MessageCard(
                 .padding(16.dp)
                 .alpha(if (isRead) 0.5f else 1f)
         ) {
-            // Header row: title and timestamp
+            // Header row: title, favorite and timestamp
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (isFavorite) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "已收藏",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
                 Text(
                     text = message.title ?: "",
                     style = MaterialTheme.typography.titleMedium.copy(
