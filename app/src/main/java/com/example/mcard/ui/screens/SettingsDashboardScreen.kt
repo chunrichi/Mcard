@@ -32,6 +32,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -42,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mcard.ui.components.RectCornerShape
+import com.example.mcard.ui.data.local.MessagesPreferences
 import com.example.mcard.ui.data.local.SourcesPreferences
 import com.example.mcard.ui.data.local.SyncPreferences
 import com.example.mcard.ui.theme.LightGray
@@ -53,11 +60,104 @@ fun SettingsDashboardScreen(
     onNavigateToSourceConfig: () -> Unit,
     modifier: Modifier = Modifier,
     syncPreferences: SyncPreferences? = null,
-    sourcesPreferences: SourcesPreferences? = null
+    sourcesPreferences: SourcesPreferences? = null,
+    messagesPreferences: MessagesPreferences? = null
 ) {
+    var showClearMessagesDialog by remember { mutableStateOf(false) }
     val storedMessageCount = syncPreferences?.lastMessageCount ?: 0
     val maxStorageEntries = 1000
     val sourceCount = sourcesPreferences?.getSources()?.size ?: 0
+
+    if (showClearMessagesDialog) {
+        Dialog(onDismissRequest = { showClearMessagesDialog = false }) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                shape = RectCornerShape,
+                color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, LightGray),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "删除所有消息",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "确定要删除所有消息吗？此操作不可撤销。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showClearMessagesDialog = false },
+                            shape = RectCornerShape,
+                            color = LightGray,
+                            border = BorderStroke(1.dp, LightGray)
+                        ) {
+                            Text(
+                                text = "取消",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    messagesPreferences?.clearAll()
+                                    syncPreferences?.lastMessageCount = 0
+                                    showClearMessagesDialog = false
+                                },
+                            shape = RectCornerShape,
+                            color = MaterialTheme.colorScheme.error,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                        ) {
+                            Text(
+                                text = "删除",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier
@@ -133,6 +233,21 @@ fun SettingsDashboardScreen(
                         },
                         trackColor = LightGray
                     )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = "删除所有消息",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.clickable {
+                                showClearMessagesDialog = true
+                            }
+                        )
+                    }
                 }
             }
 

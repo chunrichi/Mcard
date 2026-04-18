@@ -65,7 +65,8 @@ fun McardApp() {
                     navController.navigate(Screen.SourceConfig.route)
                 },
                 syncPreferences = syncPreferences,
-                sourcesPreferences = sourcesPreferences
+                sourcesPreferences = sourcesPreferences,
+                messagesPreferences = messagesPreferences
             )
         }
         composable(Screen.SourceConfig.route) {
