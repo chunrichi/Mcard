@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mcard.ui.components.MessageCard
-import com.example.mcard.ui.components.MessageDetailDialog
+import com.example.mcard.ui.components.MessageDetailPager
 import com.example.mcard.ui.data.local.MessagesPreferences
 import com.example.mcard.ui.data.local.SourcesPreferences
 import com.example.mcard.ui.data.local.SyncPreferences
@@ -53,7 +53,7 @@ fun MessageListScreen(
     messagesPreferences: MessagesPreferences? = null
 ) {
     var messages by remember { mutableStateOf<List<Message>>(emptyList()) }
-    var selectedMessage by remember { mutableStateOf<Message?>(null) }
+    var selectedMessageIndex by remember { mutableStateOf<Int?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -112,10 +112,11 @@ fun MessageListScreen(
         isLoading = false
     }
 
-    if (selectedMessage != null) {
-        MessageDetailDialog(
-            message = selectedMessage!!,
-            onDismiss = { selectedMessage = null }
+    if (selectedMessageIndex != null) {
+        MessageDetailPager(
+            messages = messages,
+            initialIndex = selectedMessageIndex!!,
+            onDismiss = { selectedMessageIndex = null }
         )
     }
 
@@ -250,13 +251,13 @@ fun MessageListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(
+                    itemsIndexed(
                         items = messages,
-                        key = { "${it.source}_${it.id}" }
-                    ) { message ->
+                        key = { _, message -> "${message.source}_${message.id}" }
+                    ) { index, message ->
                         MessageCard(
                             message = message,
-                            onCardClick = { selectedMessage = message }
+                            onCardClick = { selectedMessageIndex = index }
                         )
                     }
                 }
