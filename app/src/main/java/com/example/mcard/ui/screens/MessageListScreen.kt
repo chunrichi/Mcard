@@ -69,7 +69,7 @@ fun MessageListScreen(
         // First load from local storage
         val localMessages = messagesPreferences?.getMessages() ?: emptyList()
         if (localMessages.isNotEmpty()) {
-            messages = localMessages
+            messages = localMessages.distinctBy { "${it.source}_${it.id}" }
         }
 
         // Then fetch from network
@@ -101,7 +101,8 @@ fun MessageListScreen(
                 }
             }
             if (allMessages.isNotEmpty()) {
-                messages = allMessages.sortedByDescending { it.timestamp }
+                messages = allMessages.distinctBy { "${it.source}_${it.id}" }
+                    .sortedByDescending { it.timestamp }
                 messagesPreferences?.saveMessages(messages)
                 syncPreferences?.lastMessageCount = messages.size
             } else if (localMessages.isEmpty()) {
@@ -173,7 +174,8 @@ fun MessageListScreen(
                                                     android.util.Log.e("MessageList", "Fetch failed: ${e.message}", e)
                                                 }
                                             }
-                                            messages = allMessages.sortedByDescending { it.timestamp }
+                                            messages = allMessages.distinctBy { "${it.source}_${it.id}" }
+                                                .sortedByDescending { it.timestamp }
                                             syncPreferences?.lastMessageCount = messages.size
                                         }
                                         isRefreshing = false
@@ -250,7 +252,7 @@ fun MessageListScreen(
                 ) {
                     items(
                         items = messages,
-                        key = { it.id }
+                        key = { "${it.source}_${it.id}" }
                     ) { message ->
                         MessageCard(
                             message = message,
