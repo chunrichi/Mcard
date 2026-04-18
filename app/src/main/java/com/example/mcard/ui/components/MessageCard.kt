@@ -49,7 +49,6 @@ fun MessageCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (isRead) 0.5f else 1f)
             .clip(RectCornerShape)
             .clickable(
                 interactionSource = interactionSource,
@@ -64,6 +63,7 @@ fun MessageCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
+                .alpha(if (isRead) 0.5f else 1f)
         ) {
             // Header row: title and timestamp
             Row(

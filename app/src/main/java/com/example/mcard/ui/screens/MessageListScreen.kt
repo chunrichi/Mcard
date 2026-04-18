@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -21,8 +23,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -286,13 +292,50 @@ fun MessageListScreen(
                     ) { _, message ->
                         val messageKey = "${message.source}_${message.id}"
                         val actualIndex = messages.indexOf(message)
-                        MessageCard(
-                            message = message,
-                            isRead = readMessageKeys.contains(messageKey),
-                            onCardClick = {
-                                messagesPreferences?.markAsRead(messageKey)
-                                readMessageKeys = readMessageKeys + messageKey
-                                selectedMessageIndex = if (actualIndex >= 0) actualIndex else 0
+                        val dismissState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = { dismissValue ->
+                                if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                                    messagesPreferences?.deleteMessage(messageKey)
+                                    messages = messages.filter { "${it.source}_${it.id}" != messageKey }
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                        )
+                        SwipeToDismissBox(
+                            state = dismissState,
+                            enableDismissFromStartToEnd = false,
+                            enableDismissFromEndToStart = true,
+                            backgroundContent = {
+                                Surface(
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = androidx.compose.ui.graphics.Color(0xFFEF9A9A)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 20.dp),
+                                        contentAlignment = androidx.compose.ui.Alignment.CenterEnd
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "删除",
+                                            tint = androidx.compose.ui.graphics.Color(0xFFC62828)
+                                        )
+                                    }
+                                }
+                            },
+                            content = {
+                                MessageCard(
+                                    message = message,
+                                    isRead = readMessageKeys.contains(messageKey),
+                                    onCardClick = {
+                                        messagesPreferences?.markAsRead(messageKey)
+                                        readMessageKeys = readMessageKeys + messageKey
+                                        selectedMessageIndex = if (actualIndex >= 0) actualIndex else 0
+                                    }
+                                )
                             }
                         )
                     }

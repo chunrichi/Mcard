@@ -37,6 +37,12 @@ class MessagesPreferences(context: Context) {
         prefs.edit().remove(KEY_MESSAGES).apply()
     }
 
+    fun deleteMessage(messageKey: String) {
+        val currentMessages = getMessages().toMutableList()
+        val updatedMessages = currentMessages.filter { "${it.source}_${it.id}" != messageKey }
+        saveMessages(updatedMessages)
+    }
+
     fun markAsRead(sourceId: String) {
         val readSet = getReadMessageIds().toMutableSet()
         readSet.add(sourceId)
