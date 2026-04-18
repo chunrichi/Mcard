@@ -7,5 +7,6 @@ data class Message(
     val content: String,
     val timestamp: Long,
     val source: String,
+    val url: String? = null,
     val isExpanded: Boolean = false
 )

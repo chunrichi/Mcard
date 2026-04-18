@@ -27,6 +27,7 @@ class MessagesPreferences(context: Context) {
                 put("content", message.content)
                 put("timestamp", message.timestamp)
                 put("source", message.source)
+                message.url?.let { put("url", it) }
             }
             jsonArray.put(obj)
         }
@@ -86,7 +87,8 @@ class MessagesPreferences(context: Context) {
                     preview = obj.optString("preview", ""),
                     content = obj.optString("content", ""),
                     timestamp = obj.optLong("timestamp", 0L),
-                    source = obj.optString("source", "")
+                    source = obj.optString("source", ""),
+                    url = if (obj.has("url")) obj.getString("url").takeIf { it.isNotEmpty() } else null
                 )
             )
         }

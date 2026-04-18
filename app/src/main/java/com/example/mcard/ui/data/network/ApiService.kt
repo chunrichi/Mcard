@@ -234,7 +234,8 @@ class ApiService(
                     preview = obj.optString("preview", ""),
                     content = obj.optString("content", ""),
                     timestamp = obj.optLong("timestamp", 0L),
-                    source = obj.optString("source", "")
+                    source = obj.optString("source", ""),
+                    url = if (obj.has("url")) obj.getString("url").takeIf { it.isNotEmpty() } else null
                 )
             )
         }
