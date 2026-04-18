@@ -229,12 +229,12 @@ class ApiService(
             val obj = jsonArray.getJSONObject(i)
             messages.add(
                 Message(
-                    id = obj.getString("id"),
-                    title = obj.getString("title"),
-                    preview = obj.getString("preview"),
-                    content = obj.getString("content"),
-                    timestamp = obj.getLong("timestamp"),
-                    source = obj.getString("source")
+                    id = obj.optString("id", ""),
+                    title = obj.optString("title", ""),
+                    preview = obj.optString("preview", ""),
+                    content = obj.optString("content", ""),
+                    timestamp = obj.optLong("timestamp", 0L),
+                    source = obj.optString("source", "")
                 )
             )
         }

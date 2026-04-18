@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.mcard.ui.components.MessageCard
 import com.example.mcard.ui.components.MessageDetailDialog
+import com.example.mcard.ui.data.local.MessagesPreferences
 import com.example.mcard.ui.data.local.SourcesPreferences
 import com.example.mcard.ui.data.local.SyncPreferences
 import com.example.mcard.ui.data.model.Message
@@ -48,7 +49,8 @@ fun MessageListScreen(
     onNavigateToConfig: () -> Unit,
     modifier: Modifier = Modifier,
     syncPreferences: SyncPreferences? = null,
-    sourcesPreferences: SourcesPreferences? = null
+    sourcesPreferences: SourcesPreferences? = null,
+    messagesPreferences: MessagesPreferences? = null
 ) {
     var messages by remember { mutableStateOf<List<Message>>(emptyList()) }
     var selectedMessage by remember { mutableStateOf<Message?>(null) }
@@ -59,35 +61,52 @@ fun MessageListScreen(
     val apiService = remember { ApiService() }
     val scope = rememberCoroutineScope()
 
-    // Load messages on first composition with incremental sync
+    // Load messages on first composition - load from local first, then fetch from network
     LaunchedEffect(Unit) {
         isLoading = true
         errorMessage = null
-        val lastSync = syncPreferences?.lastSyncTimestamp ?: 0L
 
+        // First load from local storage
+        val localMessages = messagesPreferences?.getMessages() ?: emptyList()
+        if (localMessages.isNotEmpty()) {
+            messages = localMessages
+        }
+
+        // Then fetch from network
         val sources = sourcesPreferences?.getSources() ?: emptyList()
         val enabledSources = sources.filter { it.isEnabled }
 
         if (enabledSources.isEmpty()) {
-            messages = emptyList()
-            errorMessage = if (sources.isEmpty()) "请先添加信息源" else "没有启用的信息源"
+            if (localMessages.isEmpty()) {
+                messages = emptyList()
+                errorMessage = if (sources.isEmpty()) "请先添加信息源" else "没有启用的信息源"
+            }
         } else {
             val allMessages = mutableListOf<Message>()
             for (source in enabledSources) {
+                val lastSync = syncPreferences?.getLastSyncTimestamp(source.id) ?: 0L
                 val result = apiService.fetchMessagesFromSource(source, if (lastSync > 0) lastSync else null)
                 result.onSuccess { msgs ->
                     allMessages.addAll(msgs)
+                    if (msgs.isNotEmpty()) {
+                        val maxTimestamp = msgs.maxOf { it.timestamp }
+                        syncPreferences?.setLastSyncTimestamp(source.id, maxTimestamp)
+                    }
                 }.onFailure { e ->
-                    errorMessage = "拉取失败: ${e::class.simpleName} - ${e.message ?: "unknown"}"
+                    // Don't overwrite local messages with error
+                    if (messages.isEmpty()) {
+                        errorMessage = "拉取失败: ${e::class.simpleName}"
+                    }
                     android.util.Log.e("MessageList", "Fetch failed for ${source.name}: ${e.message}", e)
                 }
             }
-            messages = allMessages.sortedByDescending { it.timestamp }
             if (allMessages.isNotEmpty()) {
-                val maxTimestamp = allMessages.maxOf { it.timestamp }
-                syncPreferences?.lastSyncTimestamp = maxTimestamp
+                messages = allMessages.sortedByDescending { it.timestamp }
+                messagesPreferences?.saveMessages(messages)
+                syncPreferences?.lastMessageCount = messages.size
+            } else if (localMessages.isEmpty()) {
+                errorMessage = "拉取失败"
             }
-            syncPreferences?.lastMessageCount = messages.size
         }
         isLoading = false
     }
@@ -133,7 +152,6 @@ fun MessageListScreen(
                                     isRefreshing = true
                                     errorMessage = null
                                     scope.launch {
-                                        val lastSync = syncPreferences?.lastSyncTimestamp ?: 0L
                                         val sources = sourcesPreferences?.getSources() ?: emptyList()
                                         val enabledSources = sources.filter { it.isEnabled }
 
@@ -142,18 +160,20 @@ fun MessageListScreen(
                                         } else {
                                             val allMessages = mutableListOf<Message>()
                                             for (source in enabledSources) {
+                                                val lastSync = syncPreferences?.getLastSyncTimestamp(source.id) ?: 0L
                                                 val result = apiService.fetchMessagesFromSource(source, if (lastSync > 0) lastSync else null)
-                                                result.onSuccess { msgs -> allMessages.addAll(msgs) }
-                                                    .onFailure { e ->
-                                                        errorMessage = "拉取失败: ${e::class.simpleName}"
-                                                        android.util.Log.e("MessageList", "Fetch failed: ${e.message}", e)
+                                                result.onSuccess { msgs ->
+                                                    allMessages.addAll(msgs)
+                                                    if (msgs.isNotEmpty()) {
+                                                        val maxTimestamp = msgs.maxOf { it.timestamp }
+                                                        syncPreferences?.setLastSyncTimestamp(source.id, maxTimestamp)
                                                     }
+                                                }.onFailure { e ->
+                                                    errorMessage = "拉取失败: ${e::class.simpleName}"
+                                                    android.util.Log.e("MessageList", "Fetch failed: ${e.message}", e)
+                                                }
                                             }
                                             messages = allMessages.sortedByDescending { it.timestamp }
-                                            if (allMessages.isNotEmpty()) {
-                                                val maxTimestamp = allMessages.maxOf { it.timestamp }
-                                                syncPreferences?.lastSyncTimestamp = maxTimestamp
-                                            }
                                             syncPreferences?.lastMessageCount = messages.size
                                         }
                                         isRefreshing = false

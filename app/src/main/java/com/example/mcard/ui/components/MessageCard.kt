@@ -68,7 +68,7 @@ fun MessageCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = message.title,
+                    text = message.title ?: "",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
@@ -78,7 +78,7 @@ fun MessageCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = formatTimestamp(message.timestamp),
+                    text = formatTimestamp(message.timestamp ?: 0L),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 12.sp
                     ),
@@ -98,7 +98,7 @@ fun MessageCard(
 
             // Preview content
             Text(
-                text = message.preview,
+                text = message.preview ?: "",
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp,
                     lineHeight = 20.sp
@@ -144,7 +144,7 @@ fun MessageDetailDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = message.title,
+                        text = message.title ?: "",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp
@@ -170,13 +170,13 @@ fun MessageDetailDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = formatTimestamp(message.timestamp),
+                        text = formatTimestamp(message.timestamp ?: 0L),
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "来源: ${message.source}",
+                        text = "来源: ${message.source ?: ""}",
                         style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -190,7 +190,7 @@ fun MessageDetailDialog(
 
                 // Content (Markdown)
                 MarkdownText(
-                    text = message.content,
+                    text = message.content ?: "",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 15.sp,
                         lineHeight = 24.sp

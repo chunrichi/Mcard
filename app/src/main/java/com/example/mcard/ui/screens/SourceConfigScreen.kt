@@ -59,6 +59,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.mcard.ui.components.RectCornerShape
 import com.example.mcard.ui.data.local.SourcesPreferences
+import com.example.mcard.ui.data.local.SyncPreferences
 import com.example.mcard.ui.data.model.AuthType
 import com.example.mcard.ui.data.model.Source
 import com.example.mcard.ui.theme.LightGray
@@ -67,7 +68,8 @@ import com.example.mcard.ui.theme.LightGray
 @Composable
 fun SourceConfigScreen(
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    syncPreferences: SyncPreferences? = null
 ) {
     val context = LocalContext.current
     val sourcesPrefs = remember { SourcesPreferences(context) }
@@ -75,6 +77,7 @@ fun SourceConfigScreen(
     var sources by remember { mutableStateOf<List<Source>>(emptyList()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var showClearDialog by remember { mutableStateOf(false) }
+    var editingSourceId by remember { mutableStateOf<String?>(null) }
 
     // Load sources from local storage
     sources = sourcesPrefs.getSources()
@@ -97,6 +100,26 @@ fun SourceConfigScreen(
                 showAddDialog = false
             }
         )
+    }
+
+    // Sync time edit dialog
+    if (editingSourceId != null) {
+        val source = sources.find { it.id == editingSourceId }
+        if (source != null && syncPreferences != null) {
+            SyncTimeDialog(
+                sourceName = source.name,
+                currentTimestamp = syncPreferences.getLastSyncTimestamp(source.id),
+                onDismiss = { editingSourceId = null },
+                onSave = { newTimestamp ->
+                    syncPreferences.setLastSyncTimestamp(source.id, newTimestamp)
+                    editingSourceId = null
+                },
+                onReset = {
+                    syncPreferences.clearSourceTimestamp(source.id)
+                    editingSourceId = null
+                }
+            )
+        }
     }
 
     if (showClearDialog) {
@@ -196,6 +219,7 @@ fun SourceConfigScreen(
                     ) { source ->
                         SourceCard(
                             source = source,
+                            syncTime = syncPreferences?.getLastSyncTimestamp(source.id) ?: 0L,
                             onToggleEnabled = { enabled ->
                                 sourcesPrefs.updateSource(source.copy(isEnabled = enabled))
                                 sources = sourcesPrefs.getSources()
@@ -203,7 +227,8 @@ fun SourceConfigScreen(
                             onDelete = {
                                 sourcesPrefs.deleteSource(source.id)
                                 sources = sourcesPrefs.getSources()
-                            }
+                            },
+                            onEditSyncTime = { editingSourceId = source.id }
                         )
                     }
                 }
@@ -254,8 +279,10 @@ private fun AddSourceButton(
 @Composable
 private fun SourceCard(
     source: Source,
+    syncTime: Long,
     onToggleEnabled: (Boolean) -> Unit,
     onDelete: () -> Unit,
+    onEditSyncTime: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -335,6 +362,29 @@ private fun SourceCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+
+            // Sync time
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "同步时间: ${if (syncTime > 0) {
+                        val date = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                        date.format(java.util.Date(syncTime))
+                    } else "未同步"}",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "调整",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onEditSyncTime() }
+                )
             }
         }
     }
@@ -720,6 +770,138 @@ private fun AuthTypeSelectItem(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.surface
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SyncTimeDialog(
+    sourceName: String,
+    currentTimestamp: Long,
+    onDismiss: () -> Unit,
+    onSave: (Long) -> Unit,
+    onReset: () -> Unit
+) {
+    var timestampText by remember {
+        mutableStateOf(
+            if (currentTimestamp > 0) {
+                val date = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                date.format(java.util.Date(currentTimestamp))
+            } else ""
+        )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            shape = RectCornerShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, LightGray),
+            shadowElevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Text(
+                    text = "调整同步时间",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = sourceName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "当前: ${if (currentTimestamp > 0) {
+                        val date = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                        date.format(java.util.Date(currentTimestamp))
+                    } else "未同步"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = timestampText,
+                    onValueChange = { timestampText = it },
+                    label = { Text("时间戳（毫秒）") },
+                    placeholder = { Text("输入时间戳") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RectCornerShape
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "留空表示从头同步",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onReset() },
+                        shape = RectCornerShape,
+                        color = MaterialTheme.colorScheme.error,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                    ) {
+                        Text(
+                            text = "重置",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                val timestamp = timestampText.trim().toLongOrNull() ?: 0L
+                                onSave(timestamp)
+                            },
+                        shape = RectCornerShape,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface)
+                    ) {
+                        Text(
+                            text = "保存",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.surface,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
+import com.example.mcard.ui.data.local.MessagesPreferences
 import com.example.mcard.ui.data.local.SourcesPreferences
 import com.example.mcard.ui.data.local.SyncPreferences
 import androidx.navigation.compose.composable
@@ -38,6 +39,7 @@ fun McardApp() {
     val context = LocalContext.current
     val syncPreferences = remember { SyncPreferences(context.applicationContext) }
     val sourcesPreferences = remember { SourcesPreferences(context.applicationContext) }
+    val messagesPreferences = remember { MessagesPreferences(context.applicationContext) }
 
     NavHost(
         navController = navController,
@@ -50,7 +52,8 @@ fun McardApp() {
                     navController.navigate(Screen.SettingsDashboard.route)
                 },
                 syncPreferences = syncPreferences,
-                sourcesPreferences = sourcesPreferences
+                sourcesPreferences = sourcesPreferences,
+                messagesPreferences = messagesPreferences
             )
         }
         composable(Screen.SettingsDashboard.route) {
@@ -69,7 +72,8 @@ fun McardApp() {
             SourceConfigScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                syncPreferences = syncPreferences
             )
         }
     }
