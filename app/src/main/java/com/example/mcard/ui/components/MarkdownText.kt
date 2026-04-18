@@ -1,12 +1,14 @@
 package com.example.mcard.ui.components
 
-import androidx.compose.foundation.text.BasicText
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -23,14 +25,24 @@ fun MarkdownText(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current
 ) {
-    BasicText(
-        text = parseMarkdown(text),
+    val context = LocalContext.current
+    val annotatedString = parseMarkdown(text)
+
+    ClickableText(
+        text = annotatedString,
         modifier = modifier,
-        style = style
+        style = style,
+        onClick = { offset ->
+            annotatedString.getStringAnnotations(tag = "LINK", start = offset, end = offset)
+                .firstOrNull()?.let { annotation ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
+                    context.startActivity(intent)
+                }
+        }
     )
 }
 
-private fun parseMarkdown(text: String): AnnotatedString {
+private fun parseMarkdown(text: String): androidx.compose.ui.text.AnnotatedString {
     return buildAnnotatedString {
         val lines = text.split("\n")
         var i = 0
@@ -116,7 +128,7 @@ private fun parseMarkdown(text: String): AnnotatedString {
     }
 }
 
-private fun parseInlineMarkdown(text: String, builder: AnnotatedString.Builder) {
+private fun parseInlineMarkdown(text: String, builder: androidx.compose.ui.text.AnnotatedString.Builder) {
     var remaining = text
     val boldRegex = Regex("\\*\\*(.+?)\\*\\*")
     val italicRegex = Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)")
@@ -139,42 +151,42 @@ private fun parseInlineMarkdown(text: String, builder: AnnotatedString.Builder) 
         }
 
         // Apply style based on match type
-        when (match.value) {
-            match.destructured.component1().let { "**$it**" } -> {
-                // Bold
+        when {
+            match.value.matches(Regex("\\*\\*(.+?)\\*\\*")) -> {
+                val content = match.destructured.component1()
                 builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                    builder.append(match.destructured.component1())
+                    builder.append(content)
                 }
             }
-            match.destructured.component1().let { "*$it*" } -> {
-                // Italic
+            match.value.matches(Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)")) -> {
+                val content = match.destructured.component1()
                 builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                    builder.append(match.destructured.component1())
+                    builder.append(content)
                 }
             }
-            match.destructured.component1().let { "`$it`" } -> {
-                // Inline code
+            match.value.matches(Regex("`(.+?)`")) -> {
+                val content = match.destructured.component1()
                 builder.withStyle(SpanStyle(fontFamily = FontFamily.Monospace, background = Color.LightGray.copy(alpha = 0.3f))) {
-                    builder.append(match.destructured.component1())
+                    builder.append(content)
                 }
             }
-            match.destructured.component1().let { "~~$it~~" } -> {
-                // Strikethrough
+            match.value.matches(Regex("~~(.+?)~~")) -> {
+                val content = match.destructured.component1()
                 builder.withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-                    builder.append(match.destructured.component1())
+                    builder.append(content)
                 }
+            }
+            match.value.matches(linkRegex) -> {
+                val linkText = match.destructured.component1()
+                val linkUrl = match.destructured.component2()
+                builder.pushStringAnnotation(tag = "LINK", annotation = linkUrl)
+                builder.withStyle(SpanStyle(color = Color(0xFF0066CC), textDecoration = TextDecoration.Underline)) {
+                    builder.append(linkText)
+                }
+                builder.pop()
             }
             else -> {
-                // Link
-                try {
-                    val linkText = match.destructured.component1()
-                    val linkUrl = match.destructured.component2()
-                    builder.withStyle(SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline)) {
-                        builder.append(linkText)
-                    }
-                } catch (e: Exception) {
-                    builder.append(match.value)
-                }
+                builder.append(match.value)
             }
         }
 
