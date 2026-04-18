@@ -323,7 +323,10 @@ private fun SourceCard(
                 Surface(
                     modifier = Modifier
                         .clip(RectCornerShape)
-                        .clickable { onDelete },
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onDelete() },
                     color = if (source.isEnabled) LightGray else MaterialTheme.colorScheme.surface,
                     border = BorderStroke(1.dp, LightGray)
                 ) {
