@@ -1,6 +1,7 @@
 package com.example.mcard.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,7 @@ fun MessageListScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var readMessageKeys by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var hideReadMessages by remember { mutableStateOf(false) }
 
     val apiService = remember { ApiService() }
     val scope = rememberCoroutineScope()
@@ -215,6 +217,14 @@ fun MessageListScreen(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
+                    Text(
+                        text = if (hideReadMessages) "全部" else "未读",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (hideReadMessages) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .clickable { hideReadMessages = !hideReadMessages }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -257,6 +267,11 @@ fun MessageListScreen(
                 }
             }
             else -> {
+                val displayedMessages = if (hideReadMessages) {
+                    messages.filter { !readMessageKeys.contains("${it.source}_${it.id}") }
+                } else {
+                    messages
+                }
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -266,17 +281,18 @@ fun MessageListScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     itemsIndexed(
-                        items = messages,
+                        items = displayedMessages,
                         key = { _, message -> "${message.source}_${message.id}" }
-                    ) { index, message ->
+                    ) { _, message ->
                         val messageKey = "${message.source}_${message.id}"
+                        val actualIndex = messages.indexOf(message)
                         MessageCard(
                             message = message,
                             isRead = readMessageKeys.contains(messageKey),
                             onCardClick = {
                                 messagesPreferences?.markAsRead(messageKey)
                                 readMessageKeys = readMessageKeys + messageKey
-                                selectedMessageIndex = index
+                                selectedMessageIndex = if (actualIndex >= 0) actualIndex else 0
                             }
                         )
                     }
