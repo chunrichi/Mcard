@@ -8,7 +8,10 @@
 - 消息列表展示，支持本地缓存
 - 点击卡片全屏查看详情，支持 Markdown 渲染
 - 左右滑动切换上一条/下一条消息
-- 下拉刷新，自动同步最新消息
+- 点击星标收藏/取消收藏
+- 已读消息显示半透明
+- 左滑删除消息
+- 设置页面一键清空所有消息
 
 ### 信息源配置
 - 支持添加多个信息源
@@ -27,8 +30,17 @@
 
 ### 消息列表页
 - 卡片形式展示消息
-- 显示标题、预览和时间
-- 点击查看详情，全屏展示支持滑动切换
+- 显示标题、预览、时间和收藏标记
+- 已读消息半透明显示
+- 支持隐藏已读消息
+- 支持左滑删除
+
+### 详情页
+- 全屏展示 Markdown 内容
+- 支持链接点击跳转
+- 可选原文链接跳转
+- 点击星标收藏/取消收藏
+- 左右滑动切换消息
 
 ### 信息源配置页
 - 管理所有信息源
@@ -46,7 +58,8 @@
   "preview": "string",
   "content": "string",
   "timestamp": "number (Unix timestamp in milliseconds)",
-  "source": "string"
+  "source": "string",
+  "url": "string (optional)"
 }
 ```
 
@@ -58,6 +71,7 @@
 | content | string | 完整内容（支持 Markdown） |
 | timestamp | number | Unix 时间戳（毫秒） |
 | source | string | 消息来源名称 |
+| url | string | 原文链接（可选） |
 
 ### 信息源 (Source)
 
@@ -99,19 +113,17 @@
 ### 消息列表响应格式
 
 ```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "msg_001",
-      "title": "系统更新通知",
-      "preview": "新版本 v2.0 已发布...",
-      "content": "## 更新内容\n\n- 性能提升",
-      "timestamp": 1713432000000,
-      "source": "系统通知"
-    }
-  ]
-}
+[
+  {
+    "id": "msg_001",
+    "title": "系统更新通知",
+    "preview": "新版本 v2.0 已发布...",
+    "content": "## 更新内容\n\n- 性能提升",
+    "timestamp": 1713432000000,
+    "source": "系统通知",
+    "url": "https://example.com/notice/001"
+  }
+]
 ```
 
 ## 构建
