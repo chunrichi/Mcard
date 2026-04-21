@@ -114,8 +114,10 @@ fun MessageListScreen(
                 }
             }
             if (allMessages.isNotEmpty()) {
-                messages = allMessages.distinctBy { "${it.source}_${it.id}" }
+                val mergedMessages = (messages + allMessages)
+                    .distinctBy { "${it.source}_${it.id}" }
                     .sortedByDescending { it.timestamp }
+                messages = mergedMessages
                 messagesPreferences?.saveMessages(messages)
                 syncPreferences?.lastMessageCount = messages.size
             } else if (messages.isEmpty()) {
@@ -205,8 +207,11 @@ fun MessageListScreen(
                                                 }
                                             }
                                             if (allMessages.isNotEmpty()) {
-                                                messages = allMessages.distinctBy { "${it.source}_${it.id}" }
+                                                val mergedMessages = (messages + allMessages)
+                                                    .distinctBy { "${it.source}_${it.id}" }
                                                     .sortedByDescending { it.timestamp }
+                                                messages = mergedMessages
+                                                messagesPreferences?.saveMessages(messages)
                                                 syncPreferences?.lastMessageCount = messages.size
                                             } else if (messages.isEmpty()) {
                                                 errorMessage = "拉取失败"
