@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -69,7 +70,10 @@ fun SettingsDashboardScreen(
     val sourceCount = sourcesPreferences?.getSources()?.size ?: 0
 
     if (showClearMessagesDialog) {
-        Dialog(onDismissRequest = { showClearMessagesDialog = false }) {
+        Dialog(
+            onDismissRequest = { showClearMessagesDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,7 +105,7 @@ fun SettingsDashboardScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "确定要删除所有消息吗？此操作不可撤销。",
+                        text = "确定要删除所有消息吗？收藏的消息可选择保留。",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -110,7 +114,7 @@ fun SettingsDashboardScreen(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Surface(
                             modifier = Modifier
@@ -122,11 +126,11 @@ fun SettingsDashboardScreen(
                         ) {
                             Text(
                                 text = "取消",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 10.dp),
                                 textAlign = TextAlign.Center
                             )
                         }
@@ -135,7 +139,30 @@ fun SettingsDashboardScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clickable {
-                                    messagesPreferences?.clearAll()
+                                    messagesPreferences?.clearMessagesKeepingFavorites()
+                                    syncPreferences?.lastMessageCount = messagesPreferences?.getMessages()?.size ?: 0
+                                    showClearMessagesDialog = false
+                                },
+                            shape = RectCornerShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text(
+                                text = "保留收藏",
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.surface,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    messagesPreferences?.clearMessagesOnly()
                                     syncPreferences?.lastMessageCount = 0
                                     showClearMessagesDialog = false
                                 },
@@ -144,12 +171,12 @@ fun SettingsDashboardScreen(
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
                         ) {
                             Text(
-                                text = "删除",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                text = "全部删除",
+                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
                                 color = MaterialTheme.colorScheme.surface,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
+                                    .padding(vertical = 10.dp),
                                 textAlign = TextAlign.Center
                             )
                         }

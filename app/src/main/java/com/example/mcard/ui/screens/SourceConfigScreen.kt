@@ -805,7 +805,10 @@ private fun SyncTimeDialog(
         )
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
